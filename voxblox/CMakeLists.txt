@@ -1,23 +1,48 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.10)
 project(voxblox)
 
-find_package(catkin_simple REQUIRED )
-catkin_simple(ALL_DEPS_REQUIRED)
-
 set(CMAKE_MACOSX_RPATH 0)
-add_definitions(-std=c++11 -Wall -Wextra)
+add_definitions(-std=c++14 -Wall -Wextra)
+
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
+
+find_package(catkin REQUIRED)
+find_package(Glog REQUIRED)
 
 ############
 # PROTOBUF #
 ############
-# General idea: first check if we have protobuf catkin, then use that.
-# Otherwise use system protobuf.
-set(PROTO_DEFNS proto/voxblox/Block.proto
-                proto/voxblox/Layer.proto)
-set(BASE_PATH "proto")
-set(PROTOBUF_COMPILE_PYTHON true)
+# Set up destination directories
+catkin_destinations()
 
-PROTOBUF_CATKIN_GENERATE_CPP2(${BASE_PATH} PROTO_SRCS PROTO_HDRS ${PROTO_DEFNS})
+set(PROTO_DEFNS
+    proto/voxblox/Block.proto
+    proto/voxblox/Layer.proto)
+
+find_package(Protobuf REQUIRED)
+include_directories(${PROTOBUF_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/../)
+PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${PROTO_DEFNS})
+
+############
+#  Eigen   #
+############
+
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
+############
+#   Glog   #
+############
+
+catkin_package(
+INCLUDE_DIRS
+    include
+LIBRARIES
+    ${PROJECT_NAME} ${PROJECT_NAME}_proto
+CATKIN_DEPENDS
+DEPENDS
+)
 
 ####################
 # SET SOURCE FILES #
@@ -50,14 +75,25 @@ set("${PROJECT_NAME}_SRCS"
 #############
 # LIBRARIES #
 #############
-cs_add_library(${PROJECT_NAME}_proto
+include_directories(include ${catkin_INCLUDE_DIRS})
+
+add_library(${PROJECT_NAME}_proto
   ${PROTO_SRCS}
+  ${PROTO_HDRS}
 )
 
-cs_add_library(${PROJECT_NAME}
-  ${${PROJECT_NAME}_SRCS}
+target_link_libraries(${PROJECT_NAME}_proto ${PROTOBUF_LIBRARIES})
+
+add_library(${PROJECT_NAME}
+    ${${PROJECT_NAME}_SRCS}
 )
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_proto)
+
+target_link_libraries(${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+    ${PROJECT_NAME}_proto
+    ${PROTOBUF_LIBRARIES}
+    ${GLOG_LIBRARIES}
+)
 
 ############
 # BINARIES #
@@ -134,9 +170,3 @@ catkin_add_gtest(test_clear_spheres
   test/test_clear_spheres.cc
 )
 target_link_libraries(test_clear_spheres ${PROJECT_NAME})
-
-##########
-# EXPORT #
-##########
-cs_install()
-cs_export(INCLUDE_DIRS ${CATKIN_DEVEL_PREFIX}/include)

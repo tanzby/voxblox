@@ -1,11 +1,25 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.10)
 project(voxblox_rviz_plugin)
 
-find_package(catkin_simple REQUIRED)
-catkin_simple(ALL_DEPS_REQUIRED)
-
 set(CMAKE_MACOSX_RPATH 0)
-add_definitions(-std=c++11 -Wall)
+add_definitions(-std=c++14 -Wall -Wextra)
+find_package(catkin REQUIRED COMPONENTS
+    rviz
+    voxblox
+    voxblox_msgs
+)
+
+catkin_package(
+INCLUDE_DIRS
+    include
+LIBRARIES
+    ${PROJECT_NAME}
+CATKIN_DEPENDS
+    rviz
+    voxblox
+    voxblox_msgs
+DEPENDS
+)
 
 ## This setting causes Qt's "MOC" generation to happen automatically.
 set(CMAKE_AUTOMOC ON)
@@ -37,7 +51,9 @@ set(HEADER_FILES include/voxblox_rviz_plugin/voxblox_mesh_display.h include/voxb
 
 set(SRC_FILES src/voxblox_mesh_display.cc src/voxblox_mesh_visual.cc )
 
-cs_add_library(${PROJECT_NAME}
+include_directories(include ${catkin_INCLUDE_DIRS})
+
+add_library(${PROJECT_NAME}
   ${SRC_FILES}
   ${HEADER_FILES}
   ${MOC_FILES}
@@ -59,6 +75,3 @@ install(
 install(
   DIRECTORY icons/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/icons)
-
-cs_install()
-cs_export()
