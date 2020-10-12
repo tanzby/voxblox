@@ -12,8 +12,6 @@ find_package(Glog REQUIRED)
 ############
 # PROTOBUF #
 ############
-# Set up destination directories
-catkin_destinations()
 
 set(PROTO_DEFNS
     proto/voxblox/Block.proto
@@ -38,6 +36,7 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 catkin_package(
 INCLUDE_DIRS
     include
+    ${CMAKE_CURRENT_BINARY_DIR}/../   # key operator !! otherwise other catkin package could not find *ph.h
 LIBRARIES
     ${PROJECT_NAME} ${PROJECT_NAME}_proto
 CATKIN_DEPENDS
